@@ -205,3 +205,25 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# =========================
+# Speech project specifics
+# =========================
+
+# audio / video data
+data/
+outputs/
+*.wav
+*.mp3
+*.mp4
+*.flac
+*.ogg
+
+# model artifacts
+*.pt
+*.pth
+*.ckpt
+
+# experiment outputs
+runs/
+logs/
