@@ -8,11 +8,7 @@ def test_smoke_pipeline(tmp_path: Path) -> None:
     input_path = Path("data/raw/example.wav")
     output_dir = tmp_path / "out"
 
-    result = run_pipeline(
-        input_path=input_path,
-        output_dir=output_dir,
-        enable_engagement=False,
-    )
+    result = run_pipeline(input_path=input_path, output_dir=output_dir, enable_engagement=False, run_asr=False)
 
     assert (output_dir / "stages.txt").exists()
     assert (output_dir / "summary.md").exists()

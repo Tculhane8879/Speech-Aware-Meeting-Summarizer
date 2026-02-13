@@ -3,7 +3,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Optional
+import json
 
+from meeting_summarizer.asr.transcribe import transcribe_audio
 
 @dataclass
 class PipelineResult:
@@ -11,7 +13,7 @@ class PipelineResult:
     summary_text: str
 
 
-def run_pipeline(input_path: Path, output_dir: Path, enable_engagement: bool = False) -> PipelineResult:
+def run_pipeline(input_path: Path, output_dir: Path, enable_engagement: bool = False, run_asr: bool = True) -> PipelineResult:
     """
     Minimal scaffold for the meeting understanding pipeline.
 
@@ -23,6 +25,12 @@ def run_pipeline(input_path: Path, output_dir: Path, enable_engagement: bool = F
       - summarization/
     """
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    # ASR stage
+    if run_asr:
+        transcript = transcribe_audio(input_path)
+        transcript_path = output_dir / "transcript.json"
+        transcript_path.write_text(json.dumps(transcript, indent=2), encoding="utf-8")
 
     stages = [
         "1) Speaker diarization",

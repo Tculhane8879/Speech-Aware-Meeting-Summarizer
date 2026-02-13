@@ -14,12 +14,18 @@ def main() -> None:
                         help="Directory to write outputs.")
     parser.add_argument("--enable-engagement", action="store_true",
                         help="Enable engagement/emotion stage (optional).")
+    parser.add_argument("--no-asr", action="store_true", help="Skip ASR (useful for fast smoke tests).")
     args = parser.parse_args()
 
     input_path = Path(args.input)
     output_dir = Path(args.output)
 
-    result = run_pipeline(input_path=input_path, output_dir=output_dir, enable_engagement=args.enable_engagement)
+    result = run_pipeline(
+        input_path=input_path,
+        output_dir=output_dir,
+        enable_engagement=args.enable_engagement,
+        run_asr=not args.no_asr,
+    )
 
     print("Pipeline ran (scaffold). Outputs written to:", result.output_dir)
     print()
