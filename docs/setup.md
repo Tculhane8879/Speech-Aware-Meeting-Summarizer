@@ -9,6 +9,31 @@ If you can copy/paste commands into a terminal, you can run this project.
 - Install Python 3.11+ (or whatever you already have)
 - Install Git
 - Optional: Install VS Code
+- Install FFmpeg (required for speech transcription)
+
+### Windows (Chocolatey)
+
+Open PowerShell as Administrator and run:
+
+```bash
+choco install ffmpeg -y
+ffmpeg -version
+```
+
+### MacOS (Homebrew)
+
+```bash
+brew install ffmpeg
+ffmpeg -version
+```
+
+### Linux (Debian/Ubuntu)
+
+```bash
+sudo apt-get update
+sudo apt-get install -y ffmpeg
+ffmpeg -version
+```
 
 ---
 
@@ -23,7 +48,7 @@ cd Speech-Aware-Meeting-Summarizer
 
 ## 2) Create and activate virtual environment
 
-Windows:
+### Windows
 
 ```
 python -m venv .venv
@@ -31,7 +56,7 @@ python -m venv .venv
 python -m pip install --upgrade pip
 ```
 
-MacOS / Linux
+### MacOS / Linux
 
 ```
 python3 -m venv .venv
@@ -49,17 +74,17 @@ python -m pip install -r requirements.txt
 
 The pipeline scaffold should always work if set up correctly, before any speech models are even added.
 
-Windows:
+### Windows:
 
 ```
 $env:PYTHONPATH="src"
-python src\cli.py --output outputs\smoke_test
+python src\cli.py --no-asr --output outputs\smoke_test
 ```
 
-MacOS / Linux
+### MacOS / Linux
 
 ```
-PYTHONPATH=src python src/cli.py --output outputs/smoke_test
+PYTHONPATH=src python src/cli.py --no-asr --output outputs/smoke_test
 ```
 
 Expected behavior:
@@ -83,7 +108,43 @@ Expected output:
 1 passed
 ```
 
-## 6) Using VSCode
+## 6) Run ASR (Speech Transcription)
+
+ASR uses faster-whisper. The first time it runs, it will download the model.
+
+### Windows (Optional but recommended to avoid warnings)
+
+Before running ASR, you may run:
+
+```bash
+$env:HF_HUB_DISABLE_SYMLINKS="1"
+$env:HF_HUB_DISABLE_SYMLINKS_WARNING="1"
+```
+
+Run ASR
+
+### Windows
+
+```bash
+$env:PYTHONPATH="src"
+python src\cli.py --input data\raw\sample.wav --output outputs\asr_test
+```
+
+### MacOS / Linux
+
+```bash
+PYTHONPATH=src python src/cli.py --input data/raw/sample.wav --output outputs/asr_test
+```
+
+Expected output file:
+
+```
+outputs/asr_test/transcript.json
+```
+
+This file contains timestamped transcription segments.
+
+## 7) Using VSCode
 
 - Open the project folder in VSCode
 - Select the correct Python interpreter
@@ -92,7 +153,7 @@ Expected output:
 
 If VS Code shows import warnings but the code runs correctly, that is safe to ignore.
 
-## 7) GitHub workflow
+## 8) GitHub workflow
 
 - Do not commit directly to main
 - Create your own branch for your work
@@ -103,6 +164,6 @@ git checkout -b feat/your-feature-name
 
 - Push your branch and open a Pull Request
 
-## 8) Errors
+## 9) Errors
 
 If you're getting errors with the set up, copy the commands you used and errors into ChatGPT and it will walk you through steps to fix them.
