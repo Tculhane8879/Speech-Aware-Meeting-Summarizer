@@ -7,6 +7,7 @@ import json
 
 from meeting_summarizer.asr.transcribe import transcribe_audio
 from meeting_summarizer.diarization.diarize import baseline_diarize_from_transcript
+from meeting_summarizer.diarization.align import align_transcript_with_diarization
 
 @dataclass
 class PipelineResult:
@@ -30,18 +31,21 @@ def run_pipeline(input_path: Path, output_dir: Path, enable_engagement: bool = F
     # ASR stage
     if run_asr:
         transcript = transcribe_audio(input_path)
-        
-        # Diarization (baseline stub)
-        diarization_path = output_dir / "diarization.json"
-        
-        # If transcript is available, pass it; otherwise create a minimal transcript dict
-        transcript_data = transcript if 'transcript' not in locals() else transcript
-        
-        # (in case transcript variable name differs, ensure we use the returned transcript)
-        diarization = baseline_diarize_from_transcript(transcript_data, diarization_path)
-   
+
+        # Write transcript.json
         transcript_path = output_dir / "transcript.json"
         transcript_path.write_text(json.dumps(transcript, indent=2), encoding="utf-8")
+
+        # Diarization (baseline stub)
+        diarization_path = output_dir / "diarization.json"
+        diarization = baseline_diarize_from_transcript(transcript, diarization_path)
+
+        # Alignment: ASR segments + diarization turns -> segments.json
+        aligned = align_transcript_with_diarization(transcript, diarization)
+        (output_dir / "segments.json").write_text(
+            json.dumps(aligned, indent=2),
+            encoding="utf-8",
+        )
 
     stages = [
         "1) Speaker diarization",
