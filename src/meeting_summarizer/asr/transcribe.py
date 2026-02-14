@@ -23,9 +23,10 @@ def transcribe_audio(audio_path: Path, model_size: str = "small") -> Dict:
 
     segments: List[Dict] = []
 
-    for segment in segments_generator:
+    for i, segment in enumerate(segments_generator):
         segments.append(
             {
+                "id": i,
                 "start": segment.start,
                 "end": segment.end,
                 "text": segment.text.strip(),
