@@ -2,18 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 import json
 
 from meeting_summarizer.asr.transcribe import transcribe_audio
 from meeting_summarizer.diarization.diarize import baseline_diarize_from_transcript
 from meeting_summarizer.diarization.align import align_transcript_with_diarization
+from meeting_summarizer.summarization.summarize import summarize_segments
 
 @dataclass
 class PipelineResult:
     output_dir: Path
     summary_text: str
-
 
 def run_pipeline(input_path: Path, output_dir: Path, enable_engagement: bool = False, run_asr: bool = True) -> PipelineResult:
     """
@@ -27,6 +26,7 @@ def run_pipeline(input_path: Path, output_dir: Path, enable_engagement: bool = F
       - summarization/
     """
     output_dir.mkdir(parents=True, exist_ok=True)
+    aligned = {"segments": []}
 
     # ASR stage
     if run_asr:
@@ -56,12 +56,7 @@ def run_pipeline(input_path: Path, output_dir: Path, enable_engagement: bool = F
         "6) Speech-aware summarization",
     ]
 
-    # Placeholder summary
-    summary_text = (
-        "Placeholder summary:\n"
-        f"- Input: {input_path}\n"
-        "- TODO: diarization, ASR, prosody, topics, summarization\n"
-    )
+    summary_text = summarize_segments(input_path=input_path, aligned=aligned)
 
     (output_dir / "stages.txt").write_text("\n".join(stages) + "\n", encoding="utf-8")
     (output_dir / "summary.md").write_text(summary_text, encoding="utf-8")
