@@ -12,4 +12,5 @@ def test_smoke_pipeline(tmp_path: Path) -> None:
 
     assert (output_dir / "stages.txt").exists()
     assert (output_dir / "summary.md").exists()
-    assert "Placeholder summary" in result.summary_text
+    assert "Meeting Summary (MVP)" in result.summary_text
+    assert "No transcript segments available yet" in result.summary_text
