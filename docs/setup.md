@@ -167,3 +167,25 @@ git checkout -b feat/your-feature-name
 ## 9) Errors
 
 If you're getting errors with the set up, copy the commands you used and errors into ChatGPT and it will walk you through steps to fix them.
+
+## 10) Optional: Run local web UI for manual testing
+
+This project includes a simple local web UI to run the pipeline and inspect summary/prosody output.
+
+### Start the UI (Windows PowerShell)
+
+```bash
+$env:PYTHONPATH="src"
+python -m meeting_summarizer.web_app
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000
+```
+
+Tips:
+
+- Keep **Run ASR** unchecked for quick smoke/manual tests.
+- Enable **Run ASR** only when your audio file exists and you are ready for model download time.

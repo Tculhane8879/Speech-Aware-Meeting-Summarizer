@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Speech-Aware Meeting Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="/static/styles.css" />
+  </head>
+  <body>
+    <div class="orb orb-a"></div>
+    <div class="orb orb-b"></div>
+    <main class="shell">
+      <header class="hero">
+        <p class="eyebrow">CS 582 • Manual Pipeline Lab</p>
+        <h1>Speech-Aware Meeting Summarizer</h1>
+        <p class="subtitle">
+          Run your pipeline from the browser and inspect summary + prosody outputs in one place.
+        </p>
+      </header>
+
+      <section class="grid">
+        <article class="panel panel-form">
+          <h2>Run Settings</h2>
+          <form id="run-form">
+            <label>
+              Audio path
+              <input id="input-path" type="text" value="data/raw/sample.wav" />
+            </label>
+
+            <label>
+              Output directory
+              <input id="output-dir" type="text" value="outputs/web_run" />
+            </label>
+
+            <label class="check">
+              <input id="run-asr" type="checkbox" />
+              Run ASR (can take longer on first run)
+            </label>
+
+            <label class="check">
+              <input id="engagement" type="checkbox" />
+              Enable engagement stage
+            </label>
+
+            <button id="run-btn" type="submit">Run Pipeline</button>
+          </form>
+          <p id="status" class="status idle">Ready.</p>
+        </article>
+
+        <article class="panel panel-summary">
+          <h2>Summary</h2>
+          <pre id="summary-view">No run yet.</pre>
+        </article>
+
+        <article class="panel panel-prosody">
+          <h2>Prosody Snapshot</h2>
+          <div class="meta" id="prosody-meta">No data yet.</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Segment</th>
+                  <th>Speaker</th>
+                  <th>Pause Before (s)</th>
+                  <th>Pause After (s)</th>
+                  <th>RMS Mean</th>
+                </tr>
+              </thead>
+              <tbody id="prosody-body">
+                <tr>
+                  <td colspan="5" class="empty">Run the pipeline to populate prosody features.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <script src="/static/app.js"></script>
+  </body>
+</html>
