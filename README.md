@@ -22,6 +22,76 @@ The system is organized as a modular pipeline:
 5. **Topic Segmentation** — split the meeting into topical segments
 6. **Speech-Aware Summarization** — generate an enriched meeting summary
 
+## Current Implementation Status
+
+Implemented now:
+
+- ASR via `faster-whisper`
+- Baseline diarization stub
+- Alignment (`segments.json`)
+- Prosody features (`prosody.json`) with:
+  - `duration_s`
+  - `pause_before_s`, `pause_after_s`
+  - `rms_mean`, `rms_std`
+- MVP summary generation (`summary.md`)
+
+## Quick Start (CLI)
+
+### 1) Install dependencies
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+### 2) Run fast smoke pipeline (no ASR)
+
+Windows PowerShell:
+
+```bash
+$env:PYTHONPATH="src"
+python src\cli.py --no-asr --output outputs\smoke_test
+```
+
+MacOS/Linux:
+
+```bash
+PYTHONPATH=src python src/cli.py --no-asr --output outputs/smoke_test
+```
+
+### 3) Run tests
+
+```bash
+python -m pytest -q
+```
+
+## Run the Local Web App (manual testing)
+
+The project includes a lightweight web interface to run the pipeline and inspect summary/prosody outputs.
+
+### Start web app
+
+Windows PowerShell:
+
+```bash
+$env:PYTHONPATH="src"
+python -m meeting_summarizer.web_app
+```
+
+Then open:
+
+```text
+http://127.0.0.1:8000
+```
+
+In the UI you can:
+
+- Set audio input and output folder
+- Toggle ASR on/off
+- Run pipeline from browser
+- Inspect summary and prosody table
+
+Tip: keep **Run ASR** unchecked for quick manual checks.
+
 ## Example Output
 
 Instead of:
@@ -37,6 +107,8 @@ The system produces:
 
 ```text
 src/meeting_summarizer/   # Core pipeline modules
+  web_app.py              # Flask app entry for local UI
+  webui/                  # HTML/CSS/JS for manual testing UI
 tests/                    # Tests
 docs/                     # Project documentation
 scripts/                  # Helper scripts

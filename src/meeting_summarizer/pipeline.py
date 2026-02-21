@@ -7,6 +7,7 @@ import json
 from meeting_summarizer.asr.transcribe import transcribe_audio
 from meeting_summarizer.diarization.diarize import baseline_diarize_from_transcript
 from meeting_summarizer.diarization.align import align_transcript_with_diarization
+from meeting_summarizer.prosody.extract_prosody import extract_prosody_features
 from meeting_summarizer.summarization.summarize import summarize_segments
 
 @dataclass
@@ -55,6 +56,12 @@ def run_pipeline(input_path: Path, output_dir: Path, enable_engagement: bool = F
         "5) Topic segmentation",
         "6) Speech-aware summarization",
     ]
+
+    extract_prosody_features(
+        audio_path=input_path,
+        aligned=aligned,
+        output_path=output_dir / "prosody.json",
+    )
 
     summary_text = summarize_segments(input_path=input_path, aligned=aligned)
 

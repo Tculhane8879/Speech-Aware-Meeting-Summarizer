@@ -110,13 +110,21 @@ Prosody can be computed per `segments.json` segment
 
 ```json
 {
+  "audio_path": "data/raw/example.wav",
+  "method": "rms_pause_v1",
+  "sample_rate_hz": 16000,
+  "audio_read_error": null,
   "features": [
     {
       "segment_id": 0,
-      "f0_mean_hz": 180.2,
-      "energy_rms": 0.012,
+      "start": 0.0,
+      "end": 4.16,
+      "speaker": "SPEAKER_0",
+      "duration_s": 4.16,
       "pause_before_s": 0.35,
-      "speech_rate_wpm": 145.0
+      "pause_after_s": 0.12,
+      "rms_mean": 0.012,
+      "rms_std": 0.004
     }
   ]
 }
@@ -124,8 +132,10 @@ Prosody can be computed per `segments.json` segment
 
 Rules:
 
-- Any missing feature should be null (not omitted)
 - Features should reference `segment_id`
+- `duration_s`, `pause_before_s`, and `pause_after_s` must be non-negative
+- `rms_mean` and `rms_std` may be null when audio is unavailable or unreadable
+- `audio_read_error` should be null on success; otherwise include a human-readable reason
 
 ---
 
