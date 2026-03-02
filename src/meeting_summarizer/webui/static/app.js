@@ -3,6 +3,11 @@ const statusEl = document.getElementById("status");
 const summaryEl = document.getElementById("summary-view");
 const prosodyMetaEl = document.getElementById("prosody-meta");
 const prosodyBodyEl = document.getElementById("prosody-body");
+const sequenceMetaEl = document.getElementById("sequence-meta");
+const speakerStatsBodyEl = document.getElementById("speaker-stats-body");
+const transitionBodyEl = document.getElementById("transition-body");
+const audioMetaEl = document.getElementById("audio-meta");
+const audioPlayerEl = document.getElementById("audio-player");
 const runButton = document.getElementById("run-btn");
 
 const inputPathEl = document.getElementById("input-path");
@@ -13,6 +18,20 @@ const engagementEl = document.getElementById("engagement");
 function setStatus(kind, text) {
   statusEl.className = `status ${kind}`;
   statusEl.textContent = text;
+}
+
+function setAudioPreview(data) {
+  const hasAudio = Boolean(data.audio_file_exists && data.audio_preview_url);
+  if (!hasAudio) {
+    audioMetaEl.textContent = `Audio file not found at: ${data.input_path}`;
+    audioPlayerEl.removeAttribute("src");
+    audioPlayerEl.load();
+    return;
+  }
+
+  audioMetaEl.textContent = `Now playing source: ${data.input_path}`;
+  audioPlayerEl.src = data.audio_preview_url;
+  audioPlayerEl.load();
 }
 
 function setProsodyRows(features) {
@@ -49,6 +68,66 @@ function setProsodyRows(features) {
   prosodyBodyEl.innerHTML = rows;
 }
 
+function setSequenceRows(prosodyModel) {
+  if (!prosodyModel) {
+    sequenceMetaEl.textContent = "No sequence model output available for this run.";
+    speakerStatsBodyEl.innerHTML = `
+      <tr><td colspan="5" class="empty">No speaker stats found.</td></tr>
+    `;
+    transitionBodyEl.innerHTML = `
+      <tr><td colspan="3" class="empty">No transitions found.</td></tr>
+    `;
+    return;
+  }
+
+  const speakerStats = prosodyModel.speaker_stats || [];
+  const transitions = prosodyModel.sequence?.state_transition_counts || [];
+  const sequenceLength = prosodyModel.sequence?.length ?? 0;
+
+  sequenceMetaEl.textContent = `Sequence length: ${sequenceLength} • method: ${prosodyModel.method || "n/a"}`;
+
+  if (speakerStats.length === 0) {
+    speakerStatsBodyEl.innerHTML = `
+      <tr><td colspan="5" class="empty">No speaker stats found.</td></tr>
+    `;
+  } else {
+    speakerStatsBodyEl.innerHTML = speakerStats
+      .map((item) => {
+        const rms = item.avg_rms_mean == null ? "null" : Number(item.avg_rms_mean).toFixed(4);
+        const pb = item.avg_pause_before_s == null ? "null" : Number(item.avg_pause_before_s).toFixed(2);
+        const pa = item.avg_pause_after_s == null ? "null" : Number(item.avg_pause_after_s).toFixed(2);
+        return `
+          <tr>
+            <td>${item.speaker}</td>
+            <td>${item.segment_count}</td>
+            <td>${rms}</td>
+            <td>${pb}</td>
+            <td>${pa}</td>
+          </tr>
+        `;
+      })
+      .join("");
+  }
+
+  if (transitions.length === 0) {
+    transitionBodyEl.innerHTML = `
+      <tr><td colspan="3" class="empty">No transitions found.</td></tr>
+    `;
+  } else {
+    transitionBodyEl.innerHTML = transitions
+      .map((item) => {
+        return `
+          <tr>
+            <td>${item.from}</td>
+            <td>${item.to}</td>
+            <td>${item.count}</td>
+          </tr>
+        `;
+      })
+      .join("");
+  }
+}
+
 async function runPipeline(event) {
   event.preventDefault();
   runButton.disabled = true;
@@ -76,6 +155,7 @@ async function runPipeline(event) {
     summaryEl.textContent = data.summary_text || "(No summary generated)";
 
     const prosody = data.prosody;
+    const prosodyModel = data.prosody_model;
     const featureCount = prosody?.features?.length ?? 0;
     const sampleRate = prosody?.sample_rate_hz ?? "unknown";
     const audioError = prosody?.audio_read_error;
@@ -85,6 +165,8 @@ async function runPipeline(event) {
       : `Features: ${featureCount} • sample rate: ${sampleRate} • method: ${prosody?.method ?? "n/a"}`;
 
     setProsodyRows(prosody?.features || []);
+    setSequenceRows(prosodyModel);
+    setAudioPreview(data);
     setStatus("ok", `Done. Outputs written to ${data.output_dir}`);
   } catch (err) {
     setStatus("error", `Error: ${err.message}`);

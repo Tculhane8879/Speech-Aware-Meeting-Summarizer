@@ -109,6 +109,18 @@ body {
   grid-column: 1 / -1;
 }
 
+.panel-sequence {
+  grid-column: 1 / -1;
+}
+
+.panel h3 {
+  margin: 0.9rem 0 0.6rem;
+  font-size: 0.96rem;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
 label {
   display: block;
   margin-bottom: 0.8rem;
@@ -181,6 +193,18 @@ button:disabled {
 
 .status.ok {
   color: var(--ok);
+}
+
+.audio-preview {
+  margin-top: 1rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.audio-preview audio {
+  width: 100%;
+  margin-top: 0.2rem;
+  border-radius: 12px;
 }
 
 pre {

@@ -16,10 +16,16 @@ def test_smoke_pipeline(tmp_path: Path) -> None:
     assert (output_dir / "stages.txt").exists()
     assert (output_dir / "summary.md").exists()
     assert (output_dir / "prosody.json").exists()
+    assert (output_dir / "prosody_model.json").exists()
 
     prosody = json.loads((output_dir / "prosody.json").read_text(encoding="utf-8"))
     assert prosody["method"] == "rms_pause_v1"
     assert prosody["features"] == []
+
+    prosody_model = json.loads((output_dir / "prosody_model.json").read_text(encoding="utf-8"))
+    assert prosody_model["method"] == "prosody_sequence_v1"
+    assert prosody_model["speaker_stats"] == []
+    assert prosody_model["sequence"]["length"] == 0
 
     assert "Meeting Summary (MVP)" in result.summary_text
     assert "No transcript segments available yet" in result.summary_text
@@ -56,3 +62,9 @@ def test_pipeline_writes_prosody_with_asr_enabled_using_stubbed_transcript(tmp_p
     assert len(prosody["features"]) == 1
     assert prosody["audio_read_error"] is None
     assert prosody["features"][0]["rms_mean"] is not None
+
+    model = json.loads((output_dir / "prosody_model.json").read_text(encoding="utf-8"))
+    assert model["method"] == "prosody_sequence_v1"
+    assert len(model["speaker_stats"]) == 1
+    assert model["speaker_stats"][0]["speaker"] == "SPEAKER_0"
+    assert model["sequence"]["length"] == 1
