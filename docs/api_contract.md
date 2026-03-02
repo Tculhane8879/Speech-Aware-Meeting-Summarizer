@@ -21,6 +21,7 @@ Expected files (some may be missing depending on flags/stage completion):
 - `diarization.json` — speaker turns with timestamps
 - `segments.json` — aligned segments combining ASR + speaker (optional but recommended)
 - `prosody.json` — prosody features per segment or per speaker turn
+- `prosody_model.json` — speaker-level summaries + prototype sequence transitions from prosody
 - `topics.json` — topic segments and labels
 - `summary.md` — final human-readable summary
 - `metadata.json` — run metadata (audio path, model versions, parameters)
@@ -136,6 +137,58 @@ Rules:
 - `duration_s`, `pause_before_s`, and `pause_after_s` must be non-negative
 - `rms_mean` and `rms_std` may be null when audio is unavailable or unreadable
 - `audio_read_error` should be null on success; otherwise include a human-readable reason
+
+---
+
+## 4.5) Prosody Sequence Modeling Output: `prosody_model.json`
+
+This file summarizes speaker-level statistics and a prototype sequence view inspired by HMM state transitions.
+
+### File: `prosody_model.json`
+
+```json
+{
+  "audio_path": "data/raw/example.wav",
+  "method": "prosody_sequence_v1",
+  "source_prosody_method": "rms_pause_v1",
+  "speaker_stats": [
+    {
+      "speaker": "SPEAKER_0",
+      "segment_count": 5,
+      "total_duration_s": 18.2,
+      "avg_rms_mean": 0.038,
+      "avg_pause_before_s": 0.26,
+      "avg_pause_after_s": 0.22
+    }
+  ],
+  "sequence": {
+    "length": 5,
+    "observations": [
+      {
+        "segment_id": 0,
+        "speaker": "SPEAKER_0",
+        "energy_bucket": "high",
+        "pause_bucket": "short",
+        "state_label": "ACTIVE_SPEECH"
+      }
+    ],
+    "state_transition_counts": [
+      { "from": "ACTIVE_SPEECH", "to": "TRANSITIONAL", "count": 1 }
+    ],
+    "state_transition_probabilities": [
+      { "from": "ACTIVE_SPEECH", "to": "TRANSITIONAL", "probability": 0.5 }
+    ]
+  },
+  "notes": "Prototype HMM-style discretization over prosody observations (not a trained HMM)."
+}
+```
+
+Rules:
+
+- `speaker_stats` rows are aggregated per speaker across prosody segments
+- `observations` preserve segment time order
+- `state_label` is a prototype categorical state, not a trained HMM latent state
+- Transition probabilities are empirical ratios from observed state transitions in a single run
 
 ---
 

@@ -18,9 +18,10 @@ The system is organized as a modular pipeline:
 1. **Speaker Diarization** — determine who spoke when
 2. **Speech-to-Text (ASR)** — transcribe meeting audio
 3. **Prosody Analysis** — extract pitch, pauses, and energy
-4. **Engagement / Emotion (Optional)** — detect basic speaker engagement
-5. **Topic Segmentation** — split the meeting into topical segments
-6. **Speech-Aware Summarization** — generate an enriched meeting summary
+4. **Prosody Sequence Modeling (Prototype)** — compute speaker-level stats and state transitions
+5. **Engagement / Emotion (Optional)** — detect basic speaker engagement
+6. **Topic Segmentation** — split the meeting into topical segments
+7. **Speech-Aware Summarization** — generate an enriched meeting summary
 
 ## Current Implementation Status
 
@@ -33,6 +34,9 @@ Implemented now:
   - `duration_s`
   - `pause_before_s`, `pause_after_s`
   - `rms_mean`, `rms_std`
+- Prosody sequence modeling (`prosody_model.json`) with:
+  - speaker-level summary stats (avg RMS, avg pause behavior)
+  - time-ordered observation states and transition counts/probabilities
 - MVP summary generation (`summary.md`)
 
 ## Quick Start (CLI)
@@ -73,7 +77,19 @@ The project includes a lightweight web interface to run the pipeline and inspect
 Windows PowerShell:
 
 ```bash
+# 1) Activate venv (if not active)
+.\.venv\Scripts\Activate.ps1
+ 
+# 2) Install dependencies
+python -m pip install -r requirements.txt
+ 
+# If Flask is missing in your requirements right now, install it once:
+python -m pip install Flask
+ 
+# 3) Set source path
 $env:PYTHONPATH="src"
+ 
+# 4) Start web UI
 python -m meeting_summarizer.web_app
 ```
 
@@ -88,7 +104,7 @@ In the UI you can:
 - Set audio input and output folder
 - Toggle ASR on/off
 - Run pipeline from browser
-- Inspect summary and prosody table
+- Inspect summary, prosody table, speaker-level stats, and state transitions
 
 Tip: keep **Run ASR** unchecked for quick manual checks.
 

@@ -51,6 +51,12 @@
             <button id="run-btn" type="submit">Run Pipeline</button>
           </form>
           <p id="status" class="status idle">Ready.</p>
+
+          <div class="audio-preview">
+            <h3>Audio Preview</h3>
+            <p id="audio-meta" class="meta">Run once to load an audio preview.</p>
+            <audio id="audio-player" controls preload="metadata"></audio>
+          </div>
         </article>
 
         <article class="panel panel-summary">
@@ -75,6 +81,48 @@
               <tbody id="prosody-body">
                 <tr>
                   <td colspan="5" class="empty">Run the pipeline to populate prosody features.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </article>
+
+        <article class="panel panel-sequence">
+          <h2>Sequence Modeling (Prototype)</h2>
+          <div class="meta" id="sequence-meta">No data yet.</div>
+          <h3>Speaker Stats</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Speaker</th>
+                  <th>Segments</th>
+                  <th>Avg RMS</th>
+                  <th>Avg Pause Before</th>
+                  <th>Avg Pause After</th>
+                </tr>
+              </thead>
+              <tbody id="speaker-stats-body">
+                <tr>
+                  <td colspan="5" class="empty">Run the pipeline to compute speaker-level summaries.</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3>State Transitions</h3>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>From</th>
+                  <th>To</th>
+                  <th>Count</th>
+                </tr>
+              </thead>
+              <tbody id="transition-body">
+                <tr>
+                  <td colspan="3" class="empty">No transitions yet.</td>
                 </tr>
               </tbody>
             </table>
