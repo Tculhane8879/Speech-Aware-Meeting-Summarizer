@@ -227,6 +227,9 @@ A readable Markdown report that can include:
 - per-topic bullet points
 - speaker highlights (if diarization exists)
 - prosody cues (if extracted)
+- speaker prosody profile rows from `prosody_model.json` (if available)
+- sequence dynamics cues (state-run and transition-based)
+- engagement heuristic label when engagement stage is enabled
 
 ---
 

@@ -23,13 +23,13 @@ function setStatus(kind, text) {
 function setAudioPreview(data) {
   const hasAudio = Boolean(data.audio_file_exists && data.audio_preview_url);
   if (!hasAudio) {
-    audioMetaEl.textContent = `Audio file not found at: ${data.input_path}`;
+    audioMetaEl.textContent = `Could not find audio file at: ${data.input_path}`;
     audioPlayerEl.removeAttribute("src");
     audioPlayerEl.load();
     return;
   }
 
-  audioMetaEl.textContent = `Now playing source: ${data.input_path}`;
+  audioMetaEl.textContent = `Playing: ${data.input_path}`;
   audioPlayerEl.src = data.audio_preview_url;
   audioPlayerEl.load();
 }
@@ -38,7 +38,7 @@ function setProsodyRows(features) {
   if (!features || features.length === 0) {
     prosodyBodyEl.innerHTML = `
       <tr>
-        <td colspan="5" class="empty">No segment-level prosody features were generated for this run.</td>
+        <td colspan="5" class="empty">No speech data was found for this recording.</td>
       </tr>
     `;
     return;
@@ -70,12 +70,12 @@ function setProsodyRows(features) {
 
 function setSequenceRows(prosodyModel) {
   if (!prosodyModel) {
-    sequenceMetaEl.textContent = "No sequence model output available for this run.";
+    sequenceMetaEl.textContent = "No speaker pattern data available for this run.";
     speakerStatsBodyEl.innerHTML = `
-      <tr><td colspan="5" class="empty">No speaker stats found.</td></tr>
+      <tr><td colspan="5" class="empty">No speaker data found.</td></tr>
     `;
     transitionBodyEl.innerHTML = `
-      <tr><td colspan="3" class="empty">No transitions found.</td></tr>
+      <tr><td colspan="3" class="empty">No pattern data found.</td></tr>
     `;
     return;
   }
@@ -84,11 +84,11 @@ function setSequenceRows(prosodyModel) {
   const transitions = prosodyModel.sequence?.state_transition_counts || [];
   const sequenceLength = prosodyModel.sequence?.length ?? 0;
 
-  sequenceMetaEl.textContent = `Sequence length: ${sequenceLength} • method: ${prosodyModel.method || "n/a"}`;
+  sequenceMetaEl.textContent = `${sequenceLength} speaking turns analyzed`;
 
   if (speakerStats.length === 0) {
     speakerStatsBodyEl.innerHTML = `
-      <tr><td colspan="5" class="empty">No speaker stats found.</td></tr>
+      <tr><td colspan="5" class="empty">No speaker data found.</td></tr>
     `;
   } else {
     speakerStatsBodyEl.innerHTML = speakerStats
@@ -111,7 +111,7 @@ function setSequenceRows(prosodyModel) {
 
   if (transitions.length === 0) {
     transitionBodyEl.innerHTML = `
-      <tr><td colspan="3" class="empty">No transitions found.</td></tr>
+      <tr><td colspan="3" class="empty">No speaking style shifts detected.</td></tr>
     `;
   } else {
     transitionBodyEl.innerHTML = transitions
@@ -131,7 +131,7 @@ function setSequenceRows(prosodyModel) {
 async function runPipeline(event) {
   event.preventDefault();
   runButton.disabled = true;
-  setStatus("busy", "Running pipeline... if ASR is enabled, first run can take a while.");
+  setStatus("busy", "Analyzing your meeting... this may take a minute if transcription is enabled.");
 
   try {
     const payload = {
@@ -152,7 +152,7 @@ async function runPipeline(event) {
       throw new Error(data.error || "Pipeline run failed.");
     }
 
-    summaryEl.textContent = data.summary_text || "(No summary generated)";
+    summaryEl.textContent = data.summary_text || "(No summary was generated for this run.)"
 
     const prosody = data.prosody;
     const prosodyModel = data.prosody_model;
@@ -161,15 +161,15 @@ async function runPipeline(event) {
     const audioError = prosody?.audio_read_error;
 
     prosodyMetaEl.textContent = audioError
-      ? `Features: ${featureCount} • sample rate: ${sampleRate} • audio read warning: ${audioError}`
-      : `Features: ${featureCount} • sample rate: ${sampleRate} • method: ${prosody?.method ?? "n/a"}`;
+      ? `${featureCount} speech segments analyzed • sample rate: ${sampleRate} Hz • note: ${audioError}`
+      : `${featureCount} speech segments analyzed • sample rate: ${sampleRate} Hz`;
 
     setProsodyRows(prosody?.features || []);
     setSequenceRows(prosodyModel);
     setAudioPreview(data);
-    setStatus("ok", `Done. Outputs written to ${data.output_dir}`);
+    setStatus("ok", `Analysis complete! Results saved to: ${data.output_dir}`);
   } catch (err) {
-    setStatus("error", `Error: ${err.message}`);
+    setStatus("error", `Something went wrong: ${err.message}`);
   } finally {
     runButton.disabled = false;
   }

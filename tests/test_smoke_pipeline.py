@@ -29,6 +29,17 @@ def test_smoke_pipeline(tmp_path: Path) -> None:
 
     assert "Meeting Summary (MVP)" in result.summary_text
     assert "No transcript segments available yet" in result.summary_text
+    assert "Engagement heuristic" not in result.summary_text
+
+
+def test_smoke_pipeline_with_engagement_flag_adds_engagement_line(tmp_path: Path) -> None:
+    input_path = Path("data/raw/example.wav")
+    output_dir = tmp_path / "out"
+
+    result = run_pipeline(input_path=input_path, output_dir=output_dir, enable_engagement=True, run_asr=False)
+
+    assert "No transcript segments available yet" in result.summary_text
+    assert "Engagement heuristic: unavailable" in result.summary_text
 
 
 def test_pipeline_writes_prosody_with_asr_enabled_using_stubbed_transcript(tmp_path: Path, monkeypatch) -> None:
