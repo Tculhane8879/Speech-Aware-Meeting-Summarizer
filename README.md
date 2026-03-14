@@ -37,7 +37,10 @@ Implemented now:
 - Prosody sequence modeling (`prosody_model.json`) with:
   - speaker-level summary stats (avg RMS, avg pause behavior)
   - time-ordered observation states and transition counts/probabilities
-- MVP summary generation (`summary.md`)
+- Sequence-informed summary generation (`summary.md`) with:
+  - transcript highlights + speaker prosody profile
+  - sequence dynamics cues
+  - optional engagement heuristic label when enabled
 
 ## Quick Start (CLI)
 

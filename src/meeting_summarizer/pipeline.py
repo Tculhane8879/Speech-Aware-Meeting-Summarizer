@@ -64,9 +64,14 @@ def run_pipeline(input_path: Path, output_dir: Path, enable_engagement: bool = F
         aligned=aligned,
         output_path=output_dir / "prosody.json",
     )
-    build_prosody_sequence_model(prosody=prosody, output_path=output_dir / "prosody_model.json")
+    prosody_model = build_prosody_sequence_model(prosody=prosody, output_path=output_dir / "prosody_model.json")
 
-    summary_text = summarize_segments(input_path=input_path, aligned=aligned)
+    summary_text = summarize_segments(
+        input_path=input_path,
+        aligned=aligned,
+        prosody_model=prosody_model,
+        enable_engagement=enable_engagement,
+    )
 
     (output_dir / "stages.txt").write_text("\n".join(stages) + "\n", encoding="utf-8")
     (output_dir / "summary.md").write_text(summary_text, encoding="utf-8")

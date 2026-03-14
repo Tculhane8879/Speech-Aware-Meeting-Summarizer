@@ -17,70 +17,71 @@
     <div class="orb orb-b"></div>
     <main class="shell">
       <header class="hero">
-        <p class="eyebrow">CS 582 • Manual Pipeline Lab</p>
-        <h1>Speech-Aware Meeting Summarizer</h1>
+        <p class="eyebrow">CS 582 • Meeting Analysis Tool</p>
+        <h1>Meeting Summarizer</h1>
         <p class="subtitle">
-          Run your pipeline from the browser and inspect summary + prosody outputs in one place.
+          Upload a meeting recording and get an automatic summary with speaker insights — all from your browser.
         </p>
       </header>
 
       <section class="grid">
         <article class="panel panel-form">
-          <h2>Run Settings</h2>
+          <h2>Settings</h2>
           <form id="run-form">
             <label>
-              Audio path
+              Audio file path
               <input id="input-path" type="text" value="data/raw/sample.wav" />
             </label>
 
             <label>
-              Output directory
+              Save results to folder
               <input id="output-dir" type="text" value="outputs/web_run" />
             </label>
 
             <label class="check">
               <input id="run-asr" type="checkbox" />
-              Run ASR (can take longer on first run)
+              Transcribe speech (slower on first use — downloads a model)
             </label>
 
             <label class="check">
               <input id="engagement" type="checkbox" />
-              Enable engagement stage
+              Show speaker engagement analysis
             </label>
 
-            <button id="run-btn" type="submit">Run Pipeline</button>
+            <button id="run-btn" type="submit">Run Analysis</button>
           </form>
-          <p id="status" class="status idle">Ready.</p>
+          <p id="status" class="status idle">Ready to analyze.</p>
 
           <div class="audio-preview">
-            <h3>Audio Preview</h3>
-            <p id="audio-meta" class="meta">Run once to load an audio preview.</p>
+            <h3>Listen to Recording</h3>
+            <p id="audio-meta" class="meta">Run the analysis to load your audio here.</p>
             <audio id="audio-player" controls preload="metadata"></audio>
           </div>
         </article>
 
         <article class="panel panel-summary">
-          <h2>Summary</h2>
-          <pre id="summary-view">No run yet.</pre>
+          <h2>Meeting Summary</h2>
+          <pre id="summary-view">Your meeting summary will appear here after you click "Run Analysis".</pre>
         </article>
 
         <article class="panel panel-prosody">
-          <h2>Prosody Snapshot</h2>
+          <h2>Speech Energy &amp; Pauses</h2>
+          <p class="meta">How loud each speaker was, and how long they paused before and after speaking.</p>
           <div class="meta" id="prosody-meta">No data yet.</div>
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>Segment</th>
+                  <th>#</th>
                   <th>Speaker</th>
-                  <th>Pause Before (s)</th>
-                  <th>Pause After (s)</th>
-                  <th>RMS Mean</th>
+                  <th>Pause Before (sec)</th>
+                  <th>Pause After (sec)</th>
+                  <th>Loudness</th>
                 </tr>
               </thead>
               <tbody id="prosody-body">
                 <tr>
-                  <td colspan="5" class="empty">Run the pipeline to populate prosody features.</td>
+                  <td colspan="5" class="empty">Run the analysis to see speech energy and pause data.</td>
                 </tr>
               </tbody>
             </table>
@@ -88,41 +89,43 @@
         </article>
 
         <article class="panel panel-sequence">
-          <h2>Sequence Modeling (Prototype)</h2>
+          <h2>Speaker Behavior Patterns</h2>
+          <p class="meta">A breakdown of how each speaker communicated — their energy levels, pauses, and how their speaking style shifted during the meeting.</p>
           <div class="meta" id="sequence-meta">No data yet.</div>
-          <h3>Speaker Stats</h3>
+          <h3>Per-Speaker Overview</h3>
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>Speaker</th>
-                  <th>Segments</th>
-                  <th>Avg RMS</th>
-                  <th>Avg Pause Before</th>
-                  <th>Avg Pause After</th>
+                  <th>Times Spoke</th>
+                  <th>Avg Loudness</th>
+                  <th>Avg Pause Before (sec)</th>
+                  <th>Avg Pause After (sec)</th>
                 </tr>
               </thead>
               <tbody id="speaker-stats-body">
                 <tr>
-                  <td colspan="5" class="empty">Run the pipeline to compute speaker-level summaries.</td>
+                  <td colspan="5" class="empty">Run the analysis to see speaker summaries.</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <h3>State Transitions</h3>
+          <h3>How Speaking Style Changed</h3>
+          <p class="meta">Shows how often speakers shifted between different speaking modes (e.g., active speech → reflective pause).</p>
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>From</th>
                   <th>To</th>
-                  <th>Count</th>
+                  <th>Times</th>
                 </tr>
               </thead>
               <tbody id="transition-body">
                 <tr>
-                  <td colspan="3" class="empty">No transitions yet.</td>
+                  <td colspan="3" class="empty">No pattern data yet.</td>
                 </tr>
               </tbody>
             </table>
