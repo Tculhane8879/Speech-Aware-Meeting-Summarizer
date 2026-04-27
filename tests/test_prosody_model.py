@@ -56,7 +56,7 @@ def test_build_prosody_sequence_model_with_features(tmp_path: Path) -> None:
     model = build_prosody_sequence_model(prosody=prosody, output_path=output_path)
 
     assert output_path.exists()
-    assert model["method"] == "prosody_sequence_v1"
+    assert model["method"] == "prosody_sequence_v2"
     assert model["source_prosody_method"] == "rms_pause_v1"
 
     assert len(model["speaker_stats"]) == 2

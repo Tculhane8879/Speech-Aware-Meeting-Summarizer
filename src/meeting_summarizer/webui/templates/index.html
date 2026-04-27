@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Speech-Aware Meeting Lab</title>
+    <title>Meeting Summarizer</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -17,128 +17,138 @@
     <div class="orb orb-b"></div>
     <main class="shell">
       <header class="hero">
-        <p class="eyebrow">CS 582 • Meeting Analysis Tool</p>
+        <p class="eyebrow">CS 582 &bull; Speech-Aware Meeting Analysis</p>
         <h1>Meeting Summarizer</h1>
         <p class="subtitle">
-          Upload a meeting recording and get an automatic summary with speaker insights — all from your browser.
+          Analyze a meeting recording to get a summary, understand who spoke and how much, and see how the conversation flowed over time.
         </p>
       </header>
 
       <section class="grid">
+        <!-- Left panel: controls -->
         <article class="panel panel-form">
-          <h2>Settings</h2>
+          <h2>Analyze a Recording</h2>
           <form id="run-form">
             <label>
-              Audio file path
-              <input id="input-path" type="text" value="data/raw/sample.wav" />
+              Path to your audio file
+              <input id="input-path" type="text" value="data/raw/sample.wav" placeholder="e.g. data/raw/meeting.mp3" />
             </label>
 
             <label>
-              Save results to folder
+              Where to save the results
               <input id="output-dir" type="text" value="outputs/web_run" />
             </label>
 
             <label class="check">
               <input id="run-asr" type="checkbox" />
-              Transcribe speech (slower on first use — downloads a model)
+              Transcribe speech into text
             </label>
 
             <label class="check">
               <input id="engagement" type="checkbox" />
-              Show speaker engagement analysis
+              Include engagement analysis
+              <span class="hint">Estimates how actively each speaker participated</span>
             </label>
 
-            <button id="run-btn" type="submit">Run Analysis</button>
+            <button id="run-btn" type="submit">&#9654; Run Analysis</button>
           </form>
-          <p id="status" class="status idle">Ready to analyze.</p>
+          <p id="status" class="status idle">Ready — enter your file path and click Run Analysis.</p>
 
           <div class="audio-preview">
-            <h3>Listen to Recording</h3>
-            <p id="audio-meta" class="meta">Run the analysis to load your audio here.</p>
+            <h3>&#127911; Listen to the Recording</h3>
+            <p id="audio-meta" class="meta">Your audio player will appear here after running.</p>
             <audio id="audio-player" controls preload="metadata"></audio>
           </div>
         </article>
 
+        <!-- Right panel: summary -->
         <article class="panel panel-summary">
-          <h2>Meeting Summary</h2>
+          <h2>&#128203; Meeting Summary</h2>
+          <p class="meta">A written summary of what was discussed, who spoke, and how the conversation went.</p>
           <pre id="summary-view">Your meeting summary will appear here after you click "Run Analysis".</pre>
         </article>
 
+        <!-- Full-width: per-turn loudness & pauses -->
         <article class="panel panel-prosody">
-          <h2>Speech Energy &amp; Pauses</h2>
-          <p class="meta">How loud each speaker was, and how long they paused before and after speaking.</p>
-          <div class="meta" id="prosody-meta">No data yet.</div>
+          <h2>&#128266; Voice Energy &amp; Pauses — Turn by Turn</h2>
+          <p class="meta">Shows how loud each speaker was and how long they paused before and after their turn. Loudness is shown as a bar — longer bar means louder speech.</p>
+          <div class="meta" id="prosody-meta">Run the analysis to see results.</div>
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>#</th>
+                  <th>Turn #</th>
                   <th>Speaker</th>
-                  <th>Pause Before (sec)</th>
-                  <th>Pause After (sec)</th>
-                  <th>Loudness</th>
+                  <th>Silence before turn</th>
+                  <th>Silence after turn</th>
+                  <th>How loud</th>
                 </tr>
               </thead>
               <tbody id="prosody-body">
                 <tr>
-                  <td colspan="5" class="empty">Run the analysis to see speech energy and pause data.</td>
+                  <td colspan="5" class="empty">No data yet — run the analysis first.</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </article>
 
+        <!-- Full-width: per-speaker stats + engagement -->
         <article class="panel panel-sequence">
-          <h2>Speaker Behavior Patterns</h2>
-          <p class="meta">A breakdown of how each speaker communicated — their energy levels, pauses, and how their speaking style shifted during the meeting.</p>
-          <div class="meta" id="sequence-meta">No data yet.</div>
-          <h3>Per-Speaker Overview</h3>
+          <h2>&#128100; Speaker Overview</h2>
+          <p class="meta">A summary of each speaker's participation — how many times they spoke, how loud they were on average, and how long they typically paused before jumping in.</p>
+          <div class="meta" id="sequence-meta">Run the analysis to see results.</div>
+
+          <div id="engagement-cards" class="engagement-cards"></div>
+
+          <h3>Per-Speaker Stats</h3>
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
                   <th>Speaker</th>
-                  <th>Times Spoke</th>
-                  <th>Avg Loudness</th>
-                  <th>Avg Pause Before (sec)</th>
-                  <th>Avg Pause After (sec)</th>
+                  <th>Turns taken</th>
+                  <th>Avg. loudness</th>
+                  <th>Avg. pause before speaking</th>
+                  <th>Avg. pause after speaking</th>
                 </tr>
               </thead>
               <tbody id="speaker-stats-body">
                 <tr>
-                  <td colspan="5" class="empty">Run the analysis to see speaker summaries.</td>
+                  <td colspan="5" class="empty">No data yet — run the analysis first.</td>
                 </tr>
               </tbody>
             </table>
           </div>
 
-          <h3>How Speaking Style Changed</h3>
-          <p class="meta">Shows how often speakers shifted between different speaking modes (e.g., active speech → reflective pause).</p>
+          <h3>How the Conversation Flowed</h3>
+          <p class="meta">Shows how often the speaking style shifted — for example, from energetic back-and-forth to a long thoughtful pause. This is based on an HMM-inspired model that labels each speaking turn.</p>
           <div class="table-wrap">
             <table>
               <thead>
                 <tr>
-                  <th>From</th>
-                  <th>To</th>
-                  <th>Times</th>
+                  <th>Speaking mode before</th>
+                  <th>Speaking mode after</th>
+                  <th>Times this happened</th>
                 </tr>
               </thead>
               <tbody id="transition-body">
                 <tr>
-                  <td colspan="3" class="empty">No pattern data yet.</td>
+                  <td colspan="3" class="empty">No data yet.</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </article>
 
+        <!-- Full-width: timeline -->
         <article class="panel panel-timeline">
-          <h2>Meeting Timeline</h2>
-          <p class="meta">Visual timeline showing speaker turns, topics, and engagement patterns throughout the meeting.</p>
-          <div class="meta" id="timeline-meta">No data yet.</div>
+          <h2>&#128337; Who Spoke When</h2>
+          <p class="meta">A visual timeline of the meeting. Each colored block is a speaking turn. Hover over a block to see what was said.</p>
+          <div class="meta" id="timeline-meta">Run the analysis to see the timeline.</div>
           <div id="timeline-container">
             <div class="timeline-placeholder">
-              <p>Run the analysis to see the meeting timeline visualization.</p>
+              <p>The speaker timeline will appear here after you run the analysis.</p>
             </div>
           </div>
         </article>
