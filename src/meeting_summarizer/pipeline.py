@@ -9,6 +9,7 @@ from meeting_summarizer.diarization.diarize import baseline_diarize_from_transcr
 from meeting_summarizer.diarization.align import align_transcript_with_diarization
 from meeting_summarizer.prosody.extract_prosody import extract_prosody_features
 from meeting_summarizer.prosody.model_sequence import build_prosody_sequence_model
+from meeting_summarizer.topics.segment_topics import segment_topics, extract_topic_summary
 from meeting_summarizer.summarization.summarize import summarize_segments
 
 @dataclass
@@ -66,10 +67,16 @@ def run_pipeline(input_path: Path, output_dir: Path, enable_engagement: bool = F
     )
     prosody_model = build_prosody_sequence_model(prosody=prosody, output_path=output_dir / "prosody_model.json")
 
+    # Topic segmentation
+    topics = segment_topics(aligned.get("segments", []))
+    topics_path = output_dir / "topics.json"
+    topics_path.write_text(json.dumps(topics, indent=2), encoding="utf-8")
+
     summary_text = summarize_segments(
         input_path=input_path,
         aligned=aligned,
         prosody_model=prosody_model,
+        topics=topics,
         enable_engagement=enable_engagement,
     )
 

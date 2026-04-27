@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 from typing import Dict, List, Optional
+from meeting_summarizer.topics.segment_topics import extract_topic_summary
 
 
 def _collect_highlights(segments: List[Dict], max_items: int = 3) -> List[str]:
@@ -108,6 +109,7 @@ def summarize_segments(
     input_path: Path,
     aligned: Dict,
     prosody_model: Optional[Dict] = None,
+    topics: Optional[Dict] = None,
     enable_engagement: bool = False,
 ) -> str:
     segments: List[Dict] = aligned.get("segments", [])
@@ -157,6 +159,15 @@ def summarize_segments(
                 f"- Abrupt ACTIVE↔REFLECTIVE transitions: {int(signals['abrupt_transition_count'])}",
             ]
         )
+
+    # Add topic breakdown if available
+    if topics and topics.get("topics"):
+        topic_list = topics.get("topics", [])
+        if topic_list:
+            lines.extend(["", "Topic breakdown:"])
+            topic_summaries = extract_topic_summary(topic_list)
+            for i, summary in enumerate(topic_summaries, 1):
+                lines.append(f"{i}. {summary}")
 
     if enable_engagement:
         lines.extend(

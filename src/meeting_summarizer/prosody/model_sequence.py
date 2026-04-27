@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 from typing import Dict, List, Optional, Tuple
+from collections import Counter, defaultdict
+import numpy as np
 
 
 def _mean(values: List[float]) -> Optional[float]:
@@ -49,6 +51,97 @@ def _state_label(energy_bucket: str, pause_bucket: str) -> str:
     if energy_bucket == "medium" and pause_bucket == "short":
         return "STEADY_FLOW"
     return "TRANSITIONAL"
+
+
+def _calculate_speaker_engagement(speaker_stats: List[Dict], state_sequence: List[str], observations: List[Dict]) -> List[Dict]:
+    """
+    Calculate engagement metrics for each speaker based on their prosody patterns.
+    """
+    engagement_metrics = []
+    
+    for stats in speaker_stats:
+        speaker = stats["speaker"]
+        
+        # Get observations for this speaker
+        speaker_obs = [obs for obs in observations if obs["speaker"] == speaker]
+        speaker_states = [obs["state_label"] for obs in speaker_obs]
+        
+        # Calculate engagement indicators
+        active_speech_count = speaker_states.count("ACTIVE_SPEECH")
+        reflective_pause_count = speaker_states.count("REFLECTIVE_PAUSE")
+        steady_flow_count = speaker_states.count("STEADY_FLOW")
+        total_segments = len(speaker_states)
+        
+        # Engagement score based on multiple factors
+        factors = {
+            "active_ratio": active_speech_count / max(1, total_segments),
+            "reflective_ratio": reflective_pause_count / max(1, total_segments),
+            "steady_ratio": steady_flow_count / max(1, total_segments),
+            "avg_energy": stats.get("avg_rms_mean", 0) or 0,
+            "speaking_frequency": stats.get("segment_count", 0),
+            "avg_pause_before": stats.get("avg_pause_before_s", 0) or 0,
+        }
+        
+        # Calculate engagement score (0-100)
+        engagement_score = 0
+        
+        # Active speech contributes positively
+        engagement_score += factors["active_ratio"] * 40
+        
+        # Steady flow contributes positively
+        engagement_score += factors["steady_ratio"] * 20
+        
+        # Reflective pauses contribute moderately (shows thoughtfulness)
+        engagement_score += factors["reflective_ratio"] * 15
+        
+        # Energy level contributes
+        if factors["avg_energy"] > 0:
+            # Normalize energy (assuming typical RMS values 0-1)
+            normalized_energy = min(factors["avg_energy"] * 100, 25)
+            engagement_score += normalized_energy
+        
+        # Speaking frequency (more engaged speakers speak more)
+        if factors["speaking_frequency"] > 0:
+            frequency_score = min(factors["speaking_frequency"] * 2, 15)
+            engagement_score += frequency_score
+        
+        # Shorter pauses before speaking indicate readiness
+        if factors["avg_pause_before"] < 1.0:
+            engagement_score += 10
+        
+        engagement_score = min(100, max(0, engagement_score))
+        
+        # Determine engagement level
+        if engagement_score >= 70:
+            engagement_level = "high"
+        elif engagement_score >= 50:
+            engagement_level = "moderate"
+        elif engagement_score >= 30:
+            engagement_level = "low"
+        else:
+            engagement_level = "minimal"
+        
+        engagement_metrics.append({
+            "speaker": speaker,
+            "engagement_score": round(engagement_score, 1),
+            "engagement_level": engagement_level,
+            "factors": {
+                "active_ratio": round(factors["active_ratio"], 3),
+                "reflective_ratio": round(factors["reflective_ratio"], 3),
+                "steady_ratio": round(factors["steady_ratio"], 3),
+                "avg_energy": round(factors["avg_energy"], 4),
+                "speaking_frequency": factors["speaking_frequency"],
+                "avg_pause_before": round(factors["avg_pause_before"], 2),
+            },
+            "state_distribution": {
+                "ACTIVE_SPEECH": active_speech_count,
+                "REFLECTIVE_PAUSE": reflective_pause_count,
+                "STEADY_FLOW": steady_flow_count,
+                "TRANSITIONAL": speaker_states.count("TRANSITIONAL"),
+            }
+        })
+    
+    return engagement_metrics
 
 
 def build_prosody_sequence_model(prosody: Dict, output_path: Path) -> Dict:
@@ -156,18 +249,23 @@ def build_prosody_sequence_model(prosody: Dict, output_path: Path) -> Dict:
         for row in transition_count_rows
     ]
 
+    # Calculate speaker-level engagement metrics
+    speaker_engagement = _calculate_speaker_engagement(speaker_stats, state_sequence, observations)
+
     model = {
         "audio_path": prosody.get("audio_path"),
-        "method": "prosody_sequence_v1",
+        "method": "prosody_sequence_v2",
         "source_prosody_method": prosody.get("method"),
         "speaker_stats": speaker_stats,
+        "speaker_engagement": speaker_engagement,
         "sequence": {
             "length": len(observations),
             "observations": observations,
+            "state_sequence": state_sequence,
             "state_transition_counts": transition_count_rows,
             "state_transition_probabilities": transition_probability_rows,
         },
-        "notes": "Prototype HMM-style discretization over prosody observations (not a trained HMM).",
+        "notes": "Enhanced HMM-style discretization with speaker-level engagement analysis.",
     }
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
