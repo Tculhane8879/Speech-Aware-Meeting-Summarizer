@@ -25,22 +25,32 @@ The system is organized as a modular pipeline:
 
 ## Current Implementation Status
 
-Implemented now:
+**Fully Implemented:**
 
-- ASR via `faster-whisper`
-- Baseline diarization stub
-- Alignment (`segments.json`)
-- Prosody features (`prosody.json`) with:
-  - `duration_s`
-  - `pause_before_s`, `pause_after_s`
-  - `rms_mean`, `rms_std`
-- Prosody sequence modeling (`prosody_model.json`) with:
-  - speaker-level summary stats (avg RMS, avg pause behavior)
-  - time-ordered observation states and transition counts/probabilities
-- Sequence-informed summary generation (`summary.md`) with:
-  - transcript highlights + speaker prosody profile
-  - sequence dynamics cues
-  - optional engagement heuristic label when enabled
+- **ASR** via `faster-whisper` with real transcription
+- **Enhanced Diarization** with multi-speaker simulation and confidence scores
+- **Alignment** (`segments.json`) combining ASR and diarization
+- **Prosody Analysis** (`prosody.json`) with:
+  - `duration_s`, `pause_before_s`, `pause_after_s`
+  - `rms_mean`, `rms_std` for energy analysis
+- **Advanced Sequence Modeling** (`prosody_model.json`) with:
+  - Speaker-level statistics and engagement metrics
+  - HMM-inspired state transitions and probabilities
+  - Per-speaker engagement scores (0-100) and levels
+- **Topic Segmentation** (`topics.json`) with:
+  - Automatic topic detection based on speaker turns and content
+  - Keyword extraction and topic labeling
+  - Topic timing and duration analysis
+- **Enhanced Summarization** (`summary.md`) with:
+  - Transcript highlights and speaker prosody profiles
+  - Topic breakdown with timing information
+  - Sequence dynamics and engagement analysis
+  - Per-speaker engagement metrics
+- **Interactive Web UI** with:
+  - Plain-English interface and audio playback
+  - Real-time timeline visualization
+  - Speaker behavior patterns and engagement analysis
+  - Topic segmentation display
 
 ## Quick Start (CLI)
 

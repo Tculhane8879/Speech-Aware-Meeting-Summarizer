@@ -96,6 +96,17 @@ def run_pipeline_api():
     if prosody_model_path.exists():
         prosody_model = json.loads(prosody_model_path.read_text(encoding="utf-8"))
 
+    # Load aligned segments for timeline
+    aligned: Dict[str, Any] = {"segments": []}
+    if segments_path.exists():
+        aligned = json.loads(segments_path.read_text(encoding="utf-8"))
+
+    # Load topics for timeline
+    topics_path = output_dir / "topics.json"
+    topics: Dict[str, Any] | None = None
+    if topics_path.exists():
+        topics = json.loads(topics_path.read_text(encoding="utf-8"))
+
     resolved_input_path = _resolve_audio_path(str(input_path))
     audio_exists = resolved_input_path.exists() and resolved_input_path.is_file()
 
@@ -113,9 +124,12 @@ def run_pipeline_api():
             "prosody_json": prosody_path.exists(),
             "prosody_model_json": prosody_model_path.exists(),
             "segments_json": segments_path.exists(),
+            "topics_json": topics_path.exists(),
         },
         "prosody": prosody,
         "prosody_model": prosody_model,
+        "aligned": aligned,
+        "topics": topics,
     }
     return jsonify(response)
 

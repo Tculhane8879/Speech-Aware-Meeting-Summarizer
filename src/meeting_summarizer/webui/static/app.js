@@ -166,6 +166,7 @@ async function runPipeline(event) {
 
     setProsodyRows(prosody?.features || []);
     setSequenceRows(prosodyModel);
+    renderTimeline(data.aligned, data.topics, prosodyModel);
     setAudioPreview(data);
     setStatus("ok", `Analysis complete! Results saved to: ${data.output_dir}`);
   } catch (err) {
@@ -173,6 +174,88 @@ async function runPipeline(event) {
   } finally {
     runButton.disabled = false;
   }
+}
+
+function renderTimeline(aligned, topics, prosodyModel) {
+  const container = document.getElementById('timeline-container');
+  const metaEl = document.getElementById('timeline-meta');
+  
+  if (!aligned || !aligned.segments || aligned.segments.length === 0) {
+    container.innerHTML = '<div class="timeline-placeholder"><p>No timeline data available.</p></div>';
+    metaEl.textContent = 'No segment data found.';
+    return;
+  }
+  
+  const segments = aligned.segments;
+  const maxTime = Math.max(...segments.map(s => s.end || 0));
+  
+  // Create timeline HTML
+  let timelineHTML = '<div class="timeline">';
+  
+  // Render speaker segments
+  segments.forEach((segment, index) => {
+    const start = segment.start || 0;
+    const end = segment.end || start + 1;
+    const duration = end - start;
+    const speaker = segment.speaker || 'UNKNOWN';
+    
+    // Calculate position and width (timeline is 100% wide)
+    const left = (start / maxTime) * 100;
+    const width = (duration / maxTime) * 100;
+    
+    // Extract speaker number for styling
+    const speakerMatch = speaker.match(/SPEAKER_(\d+)/);
+    const speakerNum = speakerMatch ? parseInt(speakerMatch[1]) : 0;
+    
+    // Create segment
+    timelineHTML += `
+      <div class="timeline-segment speaker-${speakerNum}" 
+           style="left: ${left}%; width: ${width}%; top: ${speakerNum * 35}px;"
+           title="${speaker}: ${segment.text ? segment.text.substring(0, 50) + '...' : 'No text'} (${start.toFixed(1)}s - ${end.toFixed(1)}s)">
+        ${speaker}
+      </div>
+    `;
+  });
+  
+  timelineHTML += '</div>';
+  
+  // Add time labels
+  timelineHTML += '<div class="timeline-labels">';
+  for (let i = 0; i <= 4; i++) {
+    const time = (maxTime * i / 4).toFixed(0);
+    timelineHTML += `<span>${time}s</span>`;
+  }
+  timelineHTML += '</div>';
+  
+  // Add legend
+  const speakers = [...new Set(segments.map(s => s.speaker || 'UNKNOWN'))];
+  if (speakers.length > 1) {
+    timelineHTML += '<div class="timeline-legend">';
+    speakers.forEach((speaker, index) => {
+      const speakerMatch = speaker.match(/SPEAKER_(\d+)/);
+      const speakerNum = speakerMatch ? parseInt(speakerMatch[1]) : index;
+      timelineHTML += `
+        <div class="legend-item">
+          <div class="legend-color" style="background: linear-gradient(135deg, ${getSpeakerColor(speakerNum)} 0%, ${getSpeakerColor(speakerNum, true)} 100%);"></div>
+          <span>${speaker}</span>
+        </div>
+      `;
+    });
+    timelineHTML += '</div>';
+  }
+  
+  container.innerHTML = timelineHTML;
+  metaEl.textContent = `${segments.length} segments over ${maxTime.toFixed(1)} seconds`;
+}
+
+function getSpeakerColor(speakerNum, dark = false) {
+  const colors = [
+    ['#667eea', '#764ba2'],
+    ['#f093fb', '#f5576c'],
+    ['#4facfe', '#00f2fe'],
+    ['#43e97b', '#38f9d7']
+  ];
+  return colors[speakerNum % colors.length][dark ? 1 : 0];
 }
 
 form.addEventListener("submit", runPipeline);
