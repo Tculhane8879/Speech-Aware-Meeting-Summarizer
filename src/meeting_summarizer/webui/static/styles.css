@@ -340,6 +340,102 @@ th {
   border-radius: 4px;
 }
 
+/* ── Hint text under checkboxes ─────────────────────────────────────────── */
+.hint {
+  display: block;
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.15rem;
+  margin-left: 1.6rem;
+}
+
+/* ── Loudness bar ────────────────────────────────────────────────────────── */
+.loudness-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 120px;
+}
+
+.loudness-bar {
+  height: 10px;
+  border-radius: 999px;
+  background: linear-gradient(90deg, var(--accent-2), var(--accent));
+  min-width: 3px;
+  flex-shrink: 0;
+}
+
+.loudness-label {
+  font-size: 0.8rem;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.no-data {
+  color: var(--muted);
+}
+
+.warn {
+  color: #ffe08a;
+}
+
+/* ── Engagement cards ────────────────────────────────────────────────────── */
+.engagement-cards {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+  margin: 0.8rem 0 1.2rem;
+}
+
+.engagement-card {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 0.9rem 1.1rem;
+  min-width: 180px;
+  flex: 1;
+}
+
+.ec-name {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 0.25rem;
+}
+
+.ec-score {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+
+.ec-unit {
+  font-size: 0.9rem;
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.ec-detail {
+  font-size: 0.78rem;
+  color: var(--muted);
+  margin-top: 0.4rem;
+}
+
+/* ── Badges ──────────────────────────────────────────────────────────────── */
+.badge {
+  display: inline-block;
+  padding: 0.2rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 600;
+}
+
+.badge-high     { background: rgba(63, 224, 137, 0.15); color: var(--ok); }
+.badge-moderate { background: rgba(255, 224, 138, 0.15); color: #ffe08a; }
+.badge-low      { background: rgba(255, 95, 116, 0.15);  color: var(--danger); }
+.badge-minimal  { background: rgba(156, 168, 194, 0.12); color: var(--muted); }
+
+/* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .panel-form,
   .panel-summary,

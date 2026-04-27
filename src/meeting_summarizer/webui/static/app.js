@@ -9,16 +9,73 @@ const transitionBodyEl = document.getElementById("transition-body");
 const audioMetaEl = document.getElementById("audio-meta");
 const audioPlayerEl = document.getElementById("audio-player");
 const runButton = document.getElementById("run-btn");
+const engagementCardsEl = document.getElementById("engagement-cards");
 
 const inputPathEl = document.getElementById("input-path");
 const outputDirEl = document.getElementById("output-dir");
 const runAsrEl = document.getElementById("run-asr");
 const engagementEl = document.getElementById("engagement");
 
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/** "SPEAKER_0" → "Speaker 1", anything else returned as-is */
+function friendlySpeaker(raw) {
+  if (!raw) return "Unknown";
+  const m = raw.match(/^SPEAKER_(\d+)$/i);
+  return m ? `Speaker ${parseInt(m[1], 10) + 1}` : raw;
+}
+
+/** Raw state label → plain English */
+const STATE_LABELS = {
+  ACTIVE_SPEECH:    "Active speech",
+  REFLECTIVE_PAUSE: "Thoughtful pause",
+  STEADY_FLOW:      "Steady flow",
+  TRANSITIONAL:     "Transitioning",
+  UNKNOWN:          "—",
+};
+function friendlyState(raw) {
+  return STATE_LABELS[raw] || raw;
+}
+
+/** Format seconds as "1.2 s" or "—" */
+function fmtSec(val) {
+  if (val == null) return "—";
+  const n = Number(val);
+  return n === 0 ? "0 s" : `${n.toFixed(2)} s`;
+}
+
+/** Render a loudness bar for an rms_mean value (0–1 scale) */
+function loudnessBar(rms) {
+  if (rms == null) return '<span class="no-data">—</span>';
+  // Typical RMS for speech is 0.01–0.15; scale to a 0–100% bar
+  const pct = Math.min(100, Math.round((Number(rms) / 0.15) * 100));
+  const label = pct >= 66 ? "Loud" : pct >= 33 ? "Medium" : "Quiet";
+  return `<div class="loudness-wrap">
+    <div class="loudness-bar" style="width:${pct}%"></div>
+    <span class="loudness-label">${label}</span>
+  </div>`;
+}
+
+/** Engagement level → badge HTML */
+function engagementBadge(level) {
+  const map = {
+    high:     { cls: "badge-high",     icon: "🔥", text: "High engagement" },
+    moderate: { cls: "badge-moderate", icon: "💬", text: "Moderate engagement" },
+    low:      { cls: "badge-low",      icon: "😐", text: "Low engagement" },
+    minimal:  { cls: "badge-minimal",  icon: "💤", text: "Minimal engagement" },
+  };
+  const b = map[level] || { cls: "badge-moderate", icon: "💬", text: level };
+  return `<span class="badge ${b.cls}">${b.icon} ${b.text}</span>`;
+}
+
+// ── Status ────────────────────────────────────────────────────────────────────
+
 function setStatus(kind, text) {
   statusEl.className = `status ${kind}`;
   statusEl.textContent = text;
 }
+
+// ── Audio preview ─────────────────────────────────────────────────────────────
 
 function setAudioPreview(data) {
   const hasAudio = Boolean(data.audio_file_exists && data.audio_preview_url);
@@ -28,110 +85,115 @@ function setAudioPreview(data) {
     audioPlayerEl.load();
     return;
   }
-
-  audioMetaEl.textContent = `Playing: ${data.input_path}`;
+  audioMetaEl.textContent = `Now playing: ${data.input_path}`;
   audioPlayerEl.src = data.audio_preview_url;
   audioPlayerEl.load();
 }
 
+// ── Prosody rows (turn-by-turn) ───────────────────────────────────────────────
+
 function setProsodyRows(features) {
   if (!features || features.length === 0) {
-    prosodyBodyEl.innerHTML = `
-      <tr>
-        <td colspan="5" class="empty">No speech data was found for this recording.</td>
-      </tr>
-    `;
+    prosodyBodyEl.innerHTML = `<tr><td colspan="5" class="empty">No speech data found for this recording.</td></tr>`;
     return;
   }
 
   const rows = features
-    .slice(0, 12)
-    .map((f) => {
-      const pauseBefore = Number(f.pause_before_s ?? 0).toFixed(2);
-      const pauseAfter = Number(f.pause_after_s ?? 0).toFixed(2);
-      const rms =
-        f.rms_mean === null || f.rms_mean === undefined
-          ? "null"
-          : Number(f.rms_mean).toFixed(4);
-      return `
-        <tr>
-          <td>${f.segment_id}</td>
-          <td>${f.speaker}</td>
-          <td>${pauseBefore}</td>
-          <td>${pauseAfter}</td>
-          <td>${rms}</td>
-        </tr>
-      `;
-    })
+    .slice(0, 20)
+    .map((f) => `
+      <tr>
+        <td>${f.segment_id + 1}</td>
+        <td>${friendlySpeaker(f.speaker)}</td>
+        <td>${fmtSec(f.pause_before_s)}</td>
+        <td>${fmtSec(f.pause_after_s)}</td>
+        <td>${loudnessBar(f.rms_mean)}</td>
+      </tr>
+    `)
     .join("");
 
   prosodyBodyEl.innerHTML = rows;
 }
 
+// ── Engagement cards ──────────────────────────────────────────────────────────
+
+function setEngagementCards(prosodyModel) {
+  if (!engagementCardsEl) return;
+  const speakerEngagement = prosodyModel?.speaker_engagement || [];
+  if (speakerEngagement.length === 0) {
+    engagementCardsEl.innerHTML = "";
+    return;
+  }
+  engagementCardsEl.innerHTML = speakerEngagement.map(e => `
+    <div class="engagement-card">
+      <div class="ec-name">${friendlySpeaker(e.speaker)}</div>
+      <div class="ec-score">${e.engagement_score}<span class="ec-unit">/100</span></div>
+      ${engagementBadge(e.engagement_level)}
+      <div class="ec-detail">
+        Active turns: ${Math.round((e.factors?.active_ratio || 0) * 100)}% &nbsp;|&nbsp;
+        Thoughtful pauses: ${Math.round((e.factors?.reflective_ratio || 0) * 100)}%
+      </div>
+    </div>
+  `).join("");
+}
+
+// ── Speaker overview table + transitions ─────────────────────────────────────
+
 function setSequenceRows(prosodyModel) {
   if (!prosodyModel) {
-    sequenceMetaEl.textContent = "No speaker pattern data available for this run.";
-    speakerStatsBodyEl.innerHTML = `
-      <tr><td colspan="5" class="empty">No speaker data found.</td></tr>
-    `;
-    transitionBodyEl.innerHTML = `
-      <tr><td colspan="3" class="empty">No pattern data found.</td></tr>
-    `;
+    sequenceMetaEl.textContent = "No speaker data available for this run.";
+    speakerStatsBodyEl.innerHTML = `<tr><td colspan="5" class="empty">No speaker data found.</td></tr>`;
+    transitionBodyEl.innerHTML = `<tr><td colspan="3" class="empty">No data found.</td></tr>`;
+    engagementCardsEl && (engagementCardsEl.innerHTML = "");
     return;
   }
 
   const speakerStats = prosodyModel.speaker_stats || [];
   const transitions = prosodyModel.sequence?.state_transition_counts || [];
   const sequenceLength = prosodyModel.sequence?.length ?? 0;
+  const numSpeakers = speakerStats.length;
 
-  sequenceMetaEl.textContent = `${sequenceLength} speaking turns analyzed`;
+  sequenceMetaEl.textContent =
+    `${numSpeakers} speaker${numSpeakers !== 1 ? "s" : ""} detected • ${sequenceLength} speaking turns analyzed`;
+
+  setEngagementCards(prosodyModel);
 
   if (speakerStats.length === 0) {
-    speakerStatsBodyEl.innerHTML = `
-      <tr><td colspan="5" class="empty">No speaker data found.</td></tr>
-    `;
+    speakerStatsBodyEl.innerHTML = `<tr><td colspan="5" class="empty">No speaker data found.</td></tr>`;
   } else {
-    speakerStatsBodyEl.innerHTML = speakerStats
-      .map((item) => {
-        const rms = item.avg_rms_mean == null ? "null" : Number(item.avg_rms_mean).toFixed(4);
-        const pb = item.avg_pause_before_s == null ? "null" : Number(item.avg_pause_before_s).toFixed(2);
-        const pa = item.avg_pause_after_s == null ? "null" : Number(item.avg_pause_after_s).toFixed(2);
-        return `
-          <tr>
-            <td>${item.speaker}</td>
-            <td>${item.segment_count}</td>
-            <td>${rms}</td>
-            <td>${pb}</td>
-            <td>${pa}</td>
-          </tr>
-        `;
-      })
-      .join("");
+    speakerStatsBodyEl.innerHTML = speakerStats.map((item) => `
+      <tr>
+        <td><strong>${friendlySpeaker(item.speaker)}</strong></td>
+        <td>${item.segment_count}</td>
+        <td>${loudnessBar(item.avg_rms_mean)}</td>
+        <td>${fmtSec(item.avg_pause_before_s)}</td>
+        <td>${fmtSec(item.avg_pause_after_s)}</td>
+      </tr>
+    `).join("");
   }
 
-  if (transitions.length === 0) {
-    transitionBodyEl.innerHTML = `
-      <tr><td colspan="3" class="empty">No speaking style shifts detected.</td></tr>
-    `;
+  // Filter out boring UNKNOWN→UNKNOWN transitions
+  const meaningful = transitions.filter(t => t.from !== "UNKNOWN" || t.to !== "UNKNOWN");
+  const display = meaningful.length > 0 ? meaningful : transitions;
+
+  if (display.length === 0) {
+    transitionBodyEl.innerHTML = `<tr><td colspan="3" class="empty">No speaking style shifts detected.</td></tr>`;
   } else {
-    transitionBodyEl.innerHTML = transitions
-      .map((item) => {
-        return `
-          <tr>
-            <td>${item.from}</td>
-            <td>${item.to}</td>
-            <td>${item.count}</td>
-          </tr>
-        `;
-      })
-      .join("");
+    transitionBodyEl.innerHTML = display.map((item) => `
+      <tr>
+        <td>${friendlyState(item.from)}</td>
+        <td>→ ${friendlyState(item.to)}</td>
+        <td>${item.count} time${item.count !== 1 ? "s" : ""}</td>
+      </tr>
+    `).join("");
   }
 }
+
+// ── Main pipeline call ────────────────────────────────────────────────────────
 
 async function runPipeline(event) {
   event.preventDefault();
   runButton.disabled = true;
-  setStatus("busy", "Analyzing your meeting... this may take a minute if transcription is enabled.");
+  setStatus("busy", "Analyzing your meeting… this may take a minute if transcription is enabled.");
 
   try {
     const payload = {
@@ -152,17 +214,18 @@ async function runPipeline(event) {
       throw new Error(data.error || "Pipeline run failed.");
     }
 
-    summaryEl.textContent = data.summary_text || "(No summary was generated for this run.)"
+    summaryEl.textContent = data.summary_text || "(No summary was generated for this run.)";
 
     const prosody = data.prosody;
     const prosodyModel = data.prosody_model;
     const featureCount = prosody?.features?.length ?? 0;
-    const sampleRate = prosody?.sample_rate_hz ?? "unknown";
     const audioError = prosody?.audio_read_error;
 
-    prosodyMetaEl.textContent = audioError
-      ? `${featureCount} speech segments analyzed • sample rate: ${sampleRate} Hz • note: ${audioError}`
-      : `${featureCount} speech segments analyzed • sample rate: ${sampleRate} Hz`;
+    if (audioError) {
+      prosodyMetaEl.innerHTML = `<span class="warn">${featureCount} turns found — note: ${audioError}</span>`;
+    } else {
+      prosodyMetaEl.textContent = `${featureCount} speaking turns analyzed`;
+    }
 
     setProsodyRows(prosody?.features || []);
     setSequenceRows(prosodyModel);

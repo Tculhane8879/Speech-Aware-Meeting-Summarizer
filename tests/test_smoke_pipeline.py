@@ -23,7 +23,7 @@ def test_smoke_pipeline(tmp_path: Path) -> None:
     assert prosody["features"] == []
 
     prosody_model = json.loads((output_dir / "prosody_model.json").read_text(encoding="utf-8"))
-    assert prosody_model["method"] == "prosody_sequence_v1"
+    assert prosody_model["method"] == "prosody_sequence_v2"
     assert prosody_model["speaker_stats"] == []
     assert prosody_model["sequence"]["length"] == 0
 
@@ -75,7 +75,7 @@ def test_pipeline_writes_prosody_with_asr_enabled_using_stubbed_transcript(tmp_p
     assert prosody["features"][0]["rms_mean"] is not None
 
     model = json.loads((output_dir / "prosody_model.json").read_text(encoding="utf-8"))
-    assert model["method"] == "prosody_sequence_v1"
+    assert model["method"] == "prosody_sequence_v2"
     assert len(model["speaker_stats"]) == 1
     assert model["speaker_stats"][0]["speaker"] == "SPEAKER_0"
     assert model["sequence"]["length"] == 1
